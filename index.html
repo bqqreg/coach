@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coach">
+  <title>Coach Adaptativo</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      min-height: 56px;
+    }
+    
+    .btn-primary { background: #16a34a; color: white; }
+    .btn-primary:active { background: #15803d; transform: scale(0.98); }
+    .btn-secondary { background: white; border: 1px solid #e2e8f0; color: #1e293b; }
+    .btn-secondary:active { background: #f1f5f9; }
+    .btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+    .btn-bilbo { background: #7c3aed; color: white; }
+    .btn-bilbo:active { background: #5b21b6; }
+    
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      color: #1e293b;
+      font-size: 16px;
+    }
+    
+    .input:focus { outline: none; border-color: #16a34a; }
+    
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #e2e8f0;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #16a34a;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .toggle {
+      position: relative;
+      width: 52px;
+      height: 32px;
+      background: #e2e8f0;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+    
+    .toggle.active { background: #16a34a; }
+    
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .toggle.active::after { transform: translateX(20px); }
+    
+    .day-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    
+    .day-a { background: #dcfce7; color: #16a34a; border: 2px solid #16a34a; }
+    .day-b { background: #dbeafe; color: #2563eb; border: 2px solid #2563eb; }
+    .day-c { background: #fef3c7; color: #d97706; border: 2px solid #d97706; }
+    
+    .exercise-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .exercise-card.completed {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+    
+    .exercise-card.bilbo {
+      border-color: #a78bfa;
+      background: #f5f3ff;
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    .badge-blue { background: #dbeafe; color: #2563eb; }
+    .badge-yellow { background: #fef3c7; color: #d97706; }
+    .badge-purple { background: #ede9fe; color: #7c3aed; }
+    .badge-red { background: #fee2e2; color: #dc2626; }
+    
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
+    
+    .screen { display: none; padding: 1rem; padding-bottom: 100px; }
+    .screen.active { display: block; }
+    
+    .exercise-link {
+      color: #1e293b;
+      text-decoration: none;
+      border-bottom: 1px dashed #94a3b8;
+    }
+    
+    .info-box {
+      background: #f1f5f9;
+      border-left: 3px solid #3b82f6;
+      padding: 0.75rem 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.875rem;
+    }
+    
+    .info-box.warning { border-left-color: #f59e0b; background: #fffbeb; }
+    .info-box.bilbo { border-left-color: #7c3aed; background: #f5f3ff; }
+    
+    .timer-display {
+      font-size: 3rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: #1e293b;
+    }
+    
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring circle { fill: none; stroke-width: 8; }
+    .progress-ring .bg { stroke: #e2e8f0; }
+    .progress-ring .progress { stroke: #16a34a; stroke-linecap: round; }
+  </style>
+</head>
+<body x-data="app()" x-init="init()">
+  
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-4 py-3">
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-semibold text-slate-800" x-text="screenTitles[currentScreen]"></h1>
+      <button @click="showBackupModal = true" class="p-2 rounded-lg bg-slate-100" x-show="currentScreen === 'home'">
+        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HOME ==================== -->
+  <div class="screen" :class="{ 'active': currentScreen === 'home' }">
+    
+    <!-- Check-in pendiente -->
+    <template x-if="!todayCheckin">
+      <div class="card mb-4">
+        <p class="text-slate-500 mb-3">Antes de entrenar, cuéntame cómo estás:</p>
+        <button @click="showCheckinModal = true" class="btn btn-primary w-full">
+          Hacer check-in (30 seg)
+        </button>
+      </div>
+    </template>
+    
+    <!-- Estado de hoy -->
+    <template x-if="todayCheckin && !currentSession">
+      <div>
+        <!-- Resumen estado -->
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-slate-500">Tu estado hoy</span>
+            <button @click="showCheckinModal = true" class="text-sm text-green-600">Cambiar</button>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="text-3xl" x-text="getStateEmoji(todayCheckin.estado)"></span>
+            <div class="flex-1 grid grid-cols-2 gap-2 text-sm">
+              <div>Rodilla: <span class="mono" x-text="todayCheckin.dolorRodilla + '/10'"></span></div>
+              <div>Cuello: <span class="mono" x-text="todayCheckin.dolorCuello + '/10'"></span></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Día que toca -->
+        <div class="card mb-4">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="day-badge" :class="'day-' + nextDayType.toLowerCase()" x-text="nextDayType"></div>
+            <div>
+              <div class="font-semibold text-lg" x-text="getDayTitle(nextDayType)"></div>
+              <div class="text-sm text-slate-500" x-text="getDaySubtitle(nextDayType)"></div>
+            </div>
+          </div>
+          
+          <!-- Explicación del día -->
+          <div class="info-box mb-4">
+            <div class="font-medium mb-1">¿Por qué este día?</div>
+            <div class="text-slate-600" x-text="getDayExplanation(nextDayType)"></div>
+          </div>
+          
+          <!-- Si tiene Bilbo -->
+          <template x-if="dayHasBilbo(nextDayType)">
+            <div class="info-box bilbo mb-4">
+              <div class="font-medium mb-1 text-purple-600">🎯 Hoy toca Serie Bilbo</div>
+              <div class="text-slate-600">
+                <span x-text="getBilboExercise(nextDayType)"></span> - 
+                <span class="mono" x-text="getBilboWeight(nextDayType) + 'kg'"></span> x máx reps explosivas
+              </div>
+            </div>
+          </template>
+          
+          <!-- Ajuste por dolor -->
+          <template x-if="todayCheckin.dolorRodilla >= profile.umbralRodilla || todayCheckin.dolorCuello >= profile.umbralCuello">
+            <div class="info-box warning mb-4">
+              <div class="font-medium mb-1 text-amber-600">⚠️ Sesión adaptada</div>
+              <div class="text-slate-600">
+                He modificado algunos ejercicios por tu nivel de dolor.
+              </div>
+            </div>
+          </template>
+          
+          <button @click="generateSession()" class="btn btn-primary w-full">
+            Empezar entrenamiento
+          </button>
+        </div>
+        
+        <!-- Estructura semanal -->
+        <div class="card">
+          <h3 class="font-semibold mb-3">Tu estructura semanal</h3>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-lg" :class="nextDayType === 'A' ? 'bg-green-50' : 'bg-slate-100'">
+              <div class="day-badge day-a text-sm w-10 h-10">A</div>
+              <div class="flex-1">
+                <div class="font-medium">Énfasis Tirón + Bisagra</div>
+                <div class="text-xs text-slate-500">Serie Bilbo: Remo · RDL · Jalón · Core</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" :class="nextDayType === 'B' ? 'bg-blue-50' : 'bg-slate-100'">
+              <div class="day-badge day-b text-sm w-10 h-10">B</div>
+              <div class="flex-1">
+                <div class="font-medium">Énfasis Sentadilla + Empuje</div>
+                <div class="text-xs text-slate-500">Goblet · Prensa · Press · Remo · Core</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" :class="nextDayType === 'C' ? 'bg-amber-50' : 'bg-slate-100'">
+              <div class="day-badge day-c text-sm w-10 h-10">C</div>
+              <div class="flex-1">
+                <div class="font-medium">Énfasis Espalda + Posterior</div>
+                <div class="text-xs text-slate-500">Serie Bilbo: RDL · Remos x2 · Face pull · Core</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-box mt-4">
+            <div class="text-slate-600">
+              <strong>Ratio semanal:</strong> Tirón 3x · Pierna 3x · Empuje 1x<br>
+              <span class="text-xs">Más espalda que pecho para corregir tu desbalance postural.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    
+    <!-- Sesión activa -->
+    <template x-if="currentSession">
+      <div>
+        <!-- Cabecera sesión -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="day-badge" :class="'day-' + currentSession.dayType.toLowerCase()" x-text="currentSession.dayType"></div>
+            <div>
+              <div class="font-semibold" x-text="getDayTitle(currentSession.dayType)"></div>
+              <div class="text-sm text-slate-500" x-text="currentSession.duration + ' min aprox'"></div>
+            </div>
+          </div>
+          <button @click="showPainModal = true" class="btn btn-danger text-sm py-2 px-3">
+            Me duele
+          </button>
+        </div>
+        
+        <!-- Bloques de ejercicios -->
+        <template x-for="(block, blockIdx) in currentSession.blocks" :key="blockIdx">
+          <div class="mb-6">
+            <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <span x-text="block.name"></span>
+              <template x-if="block.isBilbo">
+                <span class="badge badge-purple">BILBO</span>
+              </template>
+            </h3>
+            
+            <!-- Explicación del bloque si es Bilbo -->
+            <template x-if="block.isBilbo">
+              <div class="info-box bilbo mb-3">
+                <div class="text-sm text-slate-600">
+                  <strong>Serie Bilbo:</strong> Haz todas las repeticiones que puedas de forma EXPLOSIVA pero controlada. 
+                  No al fallo, para a RIR 1-2. Objetivo: 25-35 reps en 30-45 seg.
+                </div>
+              </div>
+            </template>
+            
+            <template x-for="(exercise, exIdx) in block.exercises" :key="exercise.id + '-' + exIdx">
+              <div class="exercise-card" :class="{ 'completed': exercise.completed, 'bilbo': exercise.isBilbo }">
+                <div class="flex items-start justify-between mb-2">
+                  <div class="flex-1">
+                    <!-- Nombre como link a Google -->
+                    <a 
+                      :href="'https://www.google.com/search?q=' + encodeURIComponent(exercise.name + ' ejercicio gym como hacer')"
+                      target="_blank"
+                      class="exercise-link font-medium"
+                      @click.stop
+                      x-text="exercise.name"
+                    ></a>
+                    
+                    <!-- Badge Bilbo -->
+                    <template x-if="exercise.isBilbo">
+                      <span class="badge badge-purple ml-2">BILBO</span>
+                    </template>
+                    
+                    <!-- Prescripción -->
+                    <div class="text-sm text-slate-500 mt-1" x-text="exercise.prescription"></div>
+                    
+                    <!-- Tiempo descanso -->
+                    <template x-if="exercise.restTime">
+                      <div class="text-xs text-blue-600 mt-1">
+                        ⏱️ Descanso: <span x-text="exercise.restTime"></span>s
+                      </div>
+                    </template>
+                    
+                    <!-- Nota especial -->
+                    <template x-if="exercise.note">
+                      <div class="text-xs text-amber-600 mt-1" x-text="'💡 ' + exercise.note"></div>
+                    </template>
+                  </div>
+                  
+                  <!-- Check completado -->
+                  <button 
+                    @click="exercise.completed = !exercise.completed; saveSession()"
+                    class="w-10 h-10 rounded-full flex items-center justify-center"
+                    :class="exercise.completed ? 'bg-green-500 text-black' : 'bg-slate-100'"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </button>
+                </div>
+                
+                <!-- Timer button -->
+                <template x-if="exercise.restTime">
+                  <button 
+                    @click="startTimer(exercise.restTime, exercise.name)"
+                    class="btn btn-secondary w-full py-2 text-sm mt-2"
+                  >
+                    ⏱️ Iniciar descanso (<span x-text="exercise.restTime"></span>s)
+                  </button>
+                </template>
+                
+                <!-- Registro de sets para ejercicios que lo requieren -->
+                <template x-if="exercise.trackSets && exercise.sets">
+                  <div class="mt-3 pt-3 border-t border-slate-200">
+                    <div class="grid grid-cols-4 gap-2 text-xs text-slate-500 mb-2">
+                      <span>Set</span>
+                      <span>Peso</span>
+                      <span x-text="exercise.isBilbo ? 'Reps hechas' : 'Reps'"></span>
+                      <span x-text="exercise.isBilbo ? '' : 'RIR'"></span>
+                    </div>
+                    <template x-for="(set, setIdx) in exercise.sets" :key="setIdx">
+                      <div class="grid grid-cols-4 gap-2 mb-2">
+                        <span class="mono text-sm py-2" x-text="setIdx + 1"></span>
+                        <input 
+                          type="number" 
+                          x-model.number="set.weight"
+                          @change="saveSession()"
+                          class="input py-2 px-2 text-sm mono"
+                          :placeholder="exercise.isBilbo ? getBilboWeight(currentSession.dayType) : 'kg'"
+                        >
+                        <input 
+                          type="number" 
+                          x-model.number="set.reps"
+                          @change="saveSession(); if(exercise.isBilbo) checkBilboProgress(exercise, set)"
+                          class="input py-2 px-2 text-sm mono"
+                          placeholder="reps"
+                        >
+                        <template x-if="!exercise.isBilbo">
+                          <input 
+                            type="number" 
+                            x-model.number="set.rir"
+                            @change="saveSession()"
+                            class="input py-2 px-2 text-sm mono"
+                            placeholder="rir"
+                          >
+                        </template>
+                      </div>
+                    </template>
+                    
+                    <!-- Feedback Bilbo -->
+                    <template x-if="exercise.isBilbo && exercise.sets[0]?.reps">
+                      <div class="mt-2 p-2 rounded-lg" :class="getBilboFeedbackClass(exercise.sets[0].reps)">
+                        <span class="text-sm" x-text="getBilboFeedback(exercise.sets[0].reps)"></span>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                
+                <!-- Alternativas -->
+                <template x-if="exercise.substitutes && exercise.substitutes.length > 0">
+                  <div class="mt-2 pt-2 border-t border-slate-200">
+                    <button 
+                      @click="exercise.showSubs = !exercise.showSubs"
+                      class="text-xs text-green-600 flex items-center gap-1"
+                    >
+                      <span x-text="exercise.showSubs ? 'Ocultar alternativas' : '↔️ Ver alternativas (equipo ocupado)'"></span>
+                    </button>
+                    <template x-if="exercise.showSubs">
+                      <div class="mt-2 space-y-1">
+                        <template x-for="sub in exercise.substitutes" :key="sub">
+                          <button 
+                            @click="swapExercise(blockIdx, exIdx, sub)"
+                            class="block w-full text-left text-sm py-2 px-3 rounded bg-slate-100"
+                            x-text="sub"
+                          ></button>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+        
+        <!-- Finalizar -->
+        <button @click="finishSession()" class="btn btn-primary w-full mt-4">
+          ✓ Finalizar entrenamiento
+        </button>
+      </div>
+    </template>
+    
+    <!-- Historial reciente (cuando no hay sesión activa) -->
+    <template x-if="!currentSession && todayCheckin && recentSessions.length > 0">
+      <div class="card mt-4">
+        <h3 class="font-semibold mb-3">Últimas sesiones</h3>
+        <div class="space-y-2">
+          <template x-for="session in recentSessions.slice(0, 5)" :key="session.date">
+            <div class="flex items-center gap-3 py-2 border-b border-slate-200 last:border-0">
+              <div class="day-badge text-xs w-8 h-8" :class="'day-' + session.dayType.toLowerCase()" x-text="session.dayType"></div>
+              <div class="flex-1">
+                <div class="text-sm" x-text="formatDate(session.date)"></div>
+                <div class="text-xs text-slate-500" x-text="session.completedExercises + '/' + session.totalExercises + ' ejercicios'"></div>
+              </div>
+              <span class="text-green-600" x-show="session.completed">✓</span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+    
+  </div>
+
+  <!-- ==================== MÉTODO BILBO ==================== -->
+  <div class="screen" :class="{ 'active': currentScreen === 'bilbo' }">
+    <div class="space-y-4">
+      
+      <!-- Explicación -->
+      <div class="card">
+        <h3 class="font-semibold mb-3 flex items-center gap-2">
+          <span class="text-xl">🎯</span> Qué es el Método Bilbo
+        </h3>
+        <div class="space-y-3 text-sm text-slate-600">
+          <p>
+            <strong class="text-white">Una serie larga y explosiva</strong> con el 50% de tu máximo. 
+            El objetivo es hacer 25-35 repeticiones muy rápidas pero controladas.
+          </p>
+          <p>
+            <strong class="text-white">¿Por qué funciona?</strong> Las repeticiones explosivas reclutan más fibras musculares 
+            que las lentas. Más activación = más fuerza e hipertrofia.
+          </p>
+          <p>
+            <strong class="text-white">Progresión:</strong> Cada sesión subes 2.5kg hasta que solo puedas hacer 15 reps. 
+            Entonces empiezas un nuevo ciclo con más peso base.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Tus ejercicios Bilbo -->
+      <div class="card">
+        <h3 class="font-semibold mb-3">Tus ejercicios Bilbo</h3>
+        <p class="text-sm text-slate-500 mb-4">
+          Aplicamos Bilbo a TIRÓN (remo) y POSTERIOR (RDL), no a empuje porque tu pecho ya es fuerte.
+        </p>
+        
+        <!-- Remo -->
+        <div class="p-4 bg-slate-100 rounded-xl mb-3">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <div class="font-medium">Remo con mancuerna</div>
+              <div class="text-xs text-slate-500">Día A · Espalda</div>
+            </div>
+            <span class="badge badge-purple">Ciclo <span x-text="bilboCycles['remo-mancuerna'].cycle"></span></span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <div class="text-xs text-slate-500">Peso actual</div>
+              <div class="text-2xl font-bold mono" x-text="(bilboCycles['remo-mancuerna'].currentWeight || '-') + ' kg'"></div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Próxima sesión</div>
+              <div class="text-2xl font-bold mono" x-text="getNextBilboWeight('remo-mancuerna') + ' kg'"></div>
+            </div>
+          </div>
+          
+          <template x-if="!bilboCycles['remo-mancuerna'].currentWeight">
+            <div>
+              <label class="text-sm text-slate-500">Configura tu peso inicial (50% de tu 1RM):</label>
+              <div class="flex gap-2 mt-2">
+                <input type="number" class="input flex-1" placeholder="ej: 15" x-model.number="bilboSetup.remo">
+                <button @click="initBilbo('remo-mancuerna', bilboSetup.remo)" class="btn btn-bilbo px-4">Guardar</button>
+              </div>
+            </div>
+          </template>
+          
+          <!-- Historial mini -->
+          <template x-if="bilboCycles['remo-mancuerna'].history.length > 0">
+            <div class="mt-3 pt-3 border-t border-slate-200">
+              <div class="text-xs text-slate-500 mb-2">Últimas series</div>
+              <div class="flex gap-1">
+                <template x-for="entry in bilboCycles['remo-mancuerna'].history.slice(-8)" :key="entry.date">
+                  <div 
+                    class="flex-1 text-center py-1 px-1 rounded text-xs"
+                    :class="entry.reps >= 25 ? 'bg-green-100 text-green-600' : entry.reps <= 15 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'"
+                  >
+                    <div class="font-bold" x-text="entry.reps"></div>
+                    <div class="text-[10px] opacity-70" x-text="entry.weight + 'kg'"></div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+        
+        <!-- RDL -->
+        <div class="p-4 bg-slate-100 rounded-xl">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <div class="font-medium">RDL con mancuernas</div>
+              <div class="text-xs text-slate-500">Día C · Posterior</div>
+            </div>
+            <span class="badge badge-purple">Ciclo <span x-text="bilboCycles['rdl-mancuernas'].cycle"></span></span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-3">
+            <div>
+              <div class="text-xs text-slate-500">Peso actual</div>
+              <div class="text-2xl font-bold mono" x-text="(bilboCycles['rdl-mancuernas'].currentWeight || '-') + ' kg'"></div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Próxima sesión</div>
+              <div class="text-2xl font-bold mono" x-text="getNextBilboWeight('rdl-mancuernas') + ' kg'"></div>
+            </div>
+          </div>
+          
+          <template x-if="!bilboCycles['rdl-mancuernas'].currentWeight">
+            <div>
+              <label class="text-sm text-slate-500">Configura tu peso inicial (50% de tu 1RM):</label>
+              <div class="flex gap-2 mt-2">
+                <input type="number" class="input flex-1" placeholder="ej: 20" x-model.number="bilboSetup.rdl">
+                <button @click="initBilbo('rdl-mancuernas', bilboSetup.rdl)" class="btn btn-bilbo px-4">Guardar</button>
+              </div>
+            </div>
+          </template>
+          
+          <!-- Historial mini -->
+          <template x-if="bilboCycles['rdl-mancuernas'].history.length > 0">
+            <div class="mt-3 pt-3 border-t border-slate-200">
+              <div class="text-xs text-slate-500 mb-2">Últimas series</div>
+              <div class="flex gap-1">
+                <template x-for="entry in bilboCycles['rdl-mancuernas'].history.slice(-8)" :key="entry.date">
+                  <div 
+                    class="flex-1 text-center py-1 px-1 rounded text-xs"
+                    :class="entry.reps >= 25 ? 'bg-green-100 text-green-600' : entry.reps <= 15 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'"
+                  >
+                    <div class="font-bold" x-text="entry.reps"></div>
+                    <div class="text-[10px] opacity-70" x-text="entry.weight + 'kg'"></div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      
+      <!-- Reglas del método -->
+      <div class="card">
+        <h3 class="font-semibold mb-3">Reglas importantes</h3>
+        <ul class="space-y-2 text-sm">
+          <li class="flex gap-2">
+            <span class="text-green-600">✓</span>
+            <span>Repeticiones <strong>explosivas</strong> pero controladas</span>
+          </li>
+          <li class="flex gap-2">
+            <span class="text-green-600">✓</span>
+            <span>NO al fallo - para cuando sientas que te quedan 1-2 reps</span>
+          </li>
+          <li class="flex gap-2">
+            <span class="text-green-600">✓</span>
+            <span>Duración ideal: 30-45 segundos</span>
+          </li>
+          <li class="flex gap-2">
+            <span class="text-green-600">✓</span>
+            <span>Subir 2.5kg cada sesión</span>
+          </li>
+          <li class="flex gap-2">
+            <span class="text-[#f59e0b]">!</span>
+            <span>Cuando llegues a 15 reps → nuevo ciclo con peso +5kg del inicial</span>
+          </li>
+        </ul>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- ==================== PERFIL ==================== -->
+  <div class="screen" :class="{ 'active': currentScreen === 'profile' }">
+    <div class="space-y-4">
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Tus objetivos (en orden)</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-green-500 text-black flex items-center justify-center text-xs font-bold">1</span>
+            <span>Salud física y evitar lesiones</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-green-500/70 text-black flex items-center justify-center text-xs font-bold">2</span>
+            <span>Equilibrio postural (más espalda, menos pecho)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-green-500/50 text-black flex items-center justify-center text-xs font-bold">3</span>
+            <span>Estética atlética</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Restricciones de salud</h3>
+        <div class="space-y-3">
+          <label class="flex items-center justify-between">
+            <span class="text-sm">Problemas cervicales</span>
+            <div class="toggle" :class="{ 'active': profile.problemasCuello }" @click="profile.problemasCuello = !profile.problemasCuello; saveProfile()"></div>
+          </label>
+          <label class="flex items-center justify-between">
+            <span class="text-sm">Tendinopatía rotuliana</span>
+            <div class="toggle" :class="{ 'active': profile.tendinopatiaRodilla }" @click="profile.tendinopatiaRodilla = !profile.tendinopatiaRodilla; saveProfile()"></div>
+          </label>
+          <label class="flex items-center justify-between">
+            <span class="text-sm">Cifosis/escoliosis</span>
+            <div class="toggle" :class="{ 'active': profile.cifosis }" @click="profile.cifosis = !profile.cifosis; saveProfile()"></div>
+          </label>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Umbrales de dolor</h3>
+        <p class="text-xs text-slate-500 mb-4">Si superas estos niveles, adapto los ejercicios automáticamente.</p>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span>Rodilla máximo</span>
+              <span class="mono" x-text="profile.umbralRodilla + '/10'"></span>
+            </div>
+            <input type="range" class="slider" min="1" max="10" x-model.number="profile.umbralRodilla" @change="saveProfile()">
+          </div>
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span>Cuello máximo</span>
+              <span class="mono" x-text="profile.umbralCuello + '/10'"></span>
+            </div>
+            <input type="range" class="slider" min="1" max="10" x-model.number="profile.umbralCuello" @change="saveProfile()">
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Tiempos de descanso</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm text-slate-500">Ejercicios principales (seg)</label>
+            <input type="number" class="input mt-1" x-model.number="profile.descansoCompuesto" @change="saveProfile()">
+          </div>
+          <div>
+            <label class="text-sm text-slate-500">Ejercicios accesorios (seg)</label>
+            <input type="number" class="input mt-1" x-model.number="profile.descansoAccesorio" @change="saveProfile()">
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Equipamiento del gym</h3>
+        <div class="space-y-3">
+          <template x-for="(available, equip) in gym.equipamiento" :key="equip">
+            <label class="flex items-center justify-between">
+              <span class="text-sm" x-text="equipNames[equip]"></span>
+              <div class="toggle" :class="{ 'active': available }" @click="gym.equipamiento[equip] = !gym.equipamiento[equip]; saveGym()"></div>
+            </label>
+          </template>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- ==================== ESTADÍSTICAS ==================== -->
+  <div class="screen" :class="{ 'active': currentScreen === 'stats' }">
+    <div class="space-y-4">
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Esta semana</h3>
+        <div class="flex items-end gap-1 h-20 mb-2">
+          <template x-for="(day, idx) in weekDays" :key="idx">
+            <div class="flex-1 flex flex-col items-center">
+              <div class="w-full rounded-t" :class="getWorkoutDayClass(day)" :style="'height: ' + getWorkoutDayHeight(day) + 'px'"></div>
+              <span class="text-xs text-slate-500 mt-1" x-text="day.label"></span>
+            </div>
+          </template>
+        </div>
+        <div class="text-center">
+          <span class="text-2xl font-semibold" x-text="weeklyStats.completed"></span>
+          <span class="text-slate-500">/ 3 sesiones</span>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Totales</h3>
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div class="text-2xl font-bold text-green-600" x-text="recentSessions.length"></div>
+            <div class="text-xs text-slate-500">Sesiones</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold" x-text="getTotalCompletedSessions()"></div>
+            <div class="text-xs text-slate-500">Completadas</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold" x-text="getStreakDays()"></div>
+            <div class="text-xs text-slate-500">Racha</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Peso corporal</h3>
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <label class="text-sm text-slate-500">Actual (kg)</label>
+            <input type="number" class="input mt-1" x-model.number="metrics.pesoActual" @change="addWeightEntry()" step="0.1">
+          </div>
+          <div class="flex-1">
+            <label class="text-sm text-slate-500">Cintura (cm)</label>
+            <input type="number" class="input mt-1" x-model.number="metrics.cinturaActual" @change="addWaistEntry()" step="0.5">
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h3 class="font-semibold mb-3">Historial completo</h3>
+        <div class="space-y-2 max-h-60 overflow-y-auto">
+          <template x-for="session in recentSessions" :key="session.date">
+            <div class="flex items-center gap-3 py-2 border-b border-slate-200">
+              <div class="day-badge text-xs w-8 h-8" :class="'day-' + (session.dayType || 'a').toLowerCase()" x-text="session.dayType || '?'"></div>
+              <div class="flex-1">
+                <div class="text-sm" x-text="formatDateLong(session.date)"></div>
+                <div class="text-xs text-slate-500" x-text="session.completedExercises + '/' + session.totalExercises + ' · ' + session.duration + 'min'"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- ==================== MODALES ==================== -->
+  
+  <!-- Check-in Modal -->
+  <div x-show="showCheckinModal" x-transition class="fixed inset-0 z-50 bg-black/50 flex items-end" @click.self="showCheckinModal = false">
+    <div class="bg-white w-full rounded-t-2xl p-6 safe-bottom">
+      <h2 class="text-xl font-semibold mb-6 text-slate-800">¿Cómo estás hoy?</h2>
+      
+      <div class="space-y-6">
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm text-slate-600">Estado general</label>
+            <span class="text-2xl" x-text="getStateEmoji(checkinForm.estado)"></span>
+          </div>
+          <input type="range" class="slider" min="1" max="5" x-model.number="checkinForm.estado">
+          <div class="flex justify-between text-xs text-slate-400 mt-1">
+            <span>Mal</span>
+            <span>Genial</span>
+          </div>
+        </div>
+        
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm text-slate-600">Dolor rodilla</label>
+            <span class="mono text-sm text-slate-700" x-text="checkinForm.dolorRodilla + '/10'"></span>
+          </div>
+          <input type="range" class="slider" min="0" max="10" x-model.number="checkinForm.dolorRodilla">
+        </div>
+        
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-sm text-slate-600">Dolor cuello</label>
+            <span class="mono text-sm text-slate-700" x-text="checkinForm.dolorCuello + '/10'"></span>
+          </div>
+          <input type="range" class="slider" min="0" max="10" x-model.number="checkinForm.dolorCuello">
+        </div>
+        
+        <div class="flex items-center justify-between">
+          <div>
+            <label class="text-sm text-slate-700">Gym saturado</label>
+            <p class="text-xs text-slate-400">¿No hay racks/bancos?</p>
+          </div>
+          <div class="toggle" :class="{ 'active': checkinForm.gymSaturado }" @click="checkinForm.gymSaturado = !checkinForm.gymSaturado"></div>
+        </div>
+      </div>
+      
+      <button @click="submitCheckin()" class="btn btn-primary w-full mt-6">Guardar</button>
+    </div>
+  </div>
+  
+  <!-- Timer Modal -->
+  <div x-show="showTimerModal" x-transition class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" @click.self="stopTimer()">
+    <div class="bg-white rounded-2xl text-center p-8 mx-4 shadow-xl">
+      <p class="text-slate-500 mb-4">Descanso</p>
+      <div class="relative w-48 h-48 mx-auto mb-4">
+        <svg class="progress-ring w-full h-full" viewBox="0 0 100 100">
+          <circle class="bg" cx="50" cy="50" r="45"/>
+          <circle class="progress" cx="50" cy="50" r="45" :stroke-dasharray="283" :stroke-dashoffset="283 - (283 * timerProgress / 100)"/>
+        </svg>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <span class="timer-display" :class="{ 'text-green-600': timerSeconds === 0 }" x-text="formatTimer(timerSeconds)"></span>
+        </div>
+      </div>
+      <div class="flex gap-3 justify-center">
+        <button @click="addTimerSeconds(-15)" class="btn btn-secondary py-2 px-4">-15s</button>
+        <button @click="stopTimer()" class="btn btn-primary py-2 px-6">OK</button>
+        <button @click="addTimerSeconds(15)" class="btn btn-secondary py-2 px-4">+15s</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Pain Modal -->
+  <div x-show="showPainModal" x-transition class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="showPainModal = false">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl">
+      <h2 class="text-xl font-semibold mb-4 text-slate-800">¿Qué te duele?</h2>
+      <div class="space-y-3">
+        <button @click="handlePain('rodilla')" class="btn btn-secondary w-full justify-start">🦵 Rodilla</button>
+        <button @click="handlePain('cuello')" class="btn btn-secondary w-full justify-start">🦴 Cuello</button>
+        <button @click="handlePain('espalda')" class="btn btn-secondary w-full justify-start">🔙 Espalda baja</button>
+        <button @click="handlePain('hombro')" class="btn btn-secondary w-full justify-start">💪 Hombro</button>
+      </div>
+      <button @click="showPainModal = false" class="btn btn-secondary w-full mt-4">Cancelar</button>
+    </div>
+  </div>
+  
+  <!-- Backup Modal -->
+  <div x-show="showBackupModal" x-transition class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="showBackupModal = false">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl">
+      <h2 class="text-xl font-semibold mb-2 text-slate-800">Backup</h2>
+      <p class="text-sm text-slate-500 mb-4">Guarda en iCloud para no perder datos.</p>
+      <div class="space-y-3">
+        <button @click="exportData()" class="btn btn-primary w-full">📤 Exportar</button>
+        <label class="btn btn-secondary w-full cursor-pointer">
+          📥 Importar
+          <input type="file" accept=".json" @change="importData($event)" class="hidden">
+        </label>
+      </div>
+      <button @click="showBackupModal = false" class="btn btn-secondary w-full mt-4">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ==================== NAVEGACIÓN ==================== -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 safe-bottom z-30">
+    <div class="flex justify-around py-2">
+      <button @click="currentScreen = 'home'" class="flex flex-col items-center py-2 px-3" :class="currentScreen === 'home' ? 'text-green-600' : 'text-slate-400'">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="text-xs mt-1">Hoy</span>
+      </button>
+      <button @click="currentScreen = 'bilbo'" class="flex flex-col items-center py-2 px-3" :class="currentScreen === 'bilbo' ? 'text-purple-600' : 'text-slate-400'">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span class="text-xs mt-1">Bilbo</span>
+      </button>
+      <button @click="currentScreen = 'profile'" class="flex flex-col items-center py-2 px-3" :class="currentScreen === 'profile' ? 'text-green-600' : 'text-slate-400'">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="text-xs mt-1">Ajustes</span>
+      </button>
+      <button @click="currentScreen = 'stats'" class="flex flex-col items-center py-2 px-3" :class="currentScreen === 'stats' ? 'text-green-600' : 'text-slate-400'">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span class="text-xs mt-1">Stats</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    // ============================================
+    // BIBLIOTECA DE EJERCICIOS
+    // ============================================
+    const EJERCICIOS = {
+      // WARMUP
+      'respiracion-diafragmatica': { id: 'respiracion-diafragmatica', name: 'Respiración diafragmática', patron: 'warmup', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: '5 ciclos: inhala 4s, mantén 4s, exhala 6s' },
+      'cat-cow': { id: 'cat-cow', name: 'Cat-Cow', patron: 'warmup', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 1, sustitutos: ['bird-dog'], notas: '10 reps lentas' },
+      'wall-slides': { id: 'wall-slides', name: 'Wall slides', patron: 'warmup', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: '10 reps - activa escápulas' },
+      'bird-dog': { id: 'bird-dog', name: 'Bird-Dog', patron: 'warmup', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: '8 cada lado' },
+      'puente-gluteo': { id: 'puente-gluteo', name: 'Puente de glúteo', patron: 'warmup', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: '10 reps - activa glúteo' },
+      
+      // BISAGRA
+      'rdl-mancuernas': { id: 'rdl-mancuernas', name: 'RDL con mancuernas', patron: 'bisagra', equipo: ['mancuernas'], riesgoRodilla: 1, riesgoCuello: 1, sustitutos: ['hip-thrust', 'curl-femoral'], notas: 'Espalda neutra siempre', tipoDescanso: 'compuesto' },
+      'hip-thrust': { id: 'hip-thrust', name: 'Hip Thrust', patron: 'bisagra', equipo: ['banco', 'barra'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: ['puente-gluteo-peso'], notas: 'Aprieta glúteo arriba', tipoDescanso: 'compuesto' },
+      'curl-femoral': { id: 'curl-femoral', name: 'Curl femoral tumbado', patron: 'bisagra', equipo: ['maquina-femoral'], riesgoRodilla: 1, riesgoCuello: 0, sustitutos: ['rdl-mancuernas'], notas: 'Control en bajada', tipoDescanso: 'accesorio' },
+      'puente-gluteo-peso': { id: 'puente-gluteo-peso', name: 'Puente glúteo con peso', patron: 'bisagra', equipo: ['mancuerna'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], tipoDescanso: 'accesorio' },
+      
+      // SENTADILLA
+      'sentadilla-goblet': { id: 'sentadilla-goblet', name: 'Sentadilla Goblet', patron: 'sentadilla', equipo: ['mancuerna'], riesgoRodilla: 2, riesgoCuello: 0, sustitutos: ['prensa', 'sentadilla-caja'], notas: 'Profundidad cómoda', tipoDescanso: 'compuesto' },
+      'prensa': { id: 'prensa', name: 'Prensa de piernas', patron: 'sentadilla', equipo: ['prensa'], riesgoRodilla: 2, riesgoCuello: 0, sustitutos: ['sentadilla-goblet'], notas: 'Pies altos = más glúteo', tipoDescanso: 'compuesto' },
+      'sentadilla-caja': { id: 'sentadilla-caja', name: 'Sentadilla a caja', patron: 'sentadilla', equipo: ['mancuerna'], riesgoRodilla: 1, riesgoCuello: 0, sustitutos: ['prensa'], notas: 'Buena para rodilla', tipoDescanso: 'compuesto' },
+      'split-squat': { id: 'split-squat', name: 'Split Squat', patron: 'sentadilla', equipo: ['mancuernas'], riesgoRodilla: 2, riesgoCuello: 0, sustitutos: ['prensa'], tipoDescanso: 'compuesto' },
+      
+      // EMPUJE
+      'press-mancuernas': { id: 'press-mancuernas', name: 'Press mancuernas plano', patron: 'empuje', equipo: ['mancuernas', 'banco'], riesgoRodilla: 0, riesgoCuello: 1, sustitutos: ['press-maquina', 'flexiones'], tipoDescanso: 'compuesto' },
+      'press-maquina': { id: 'press-maquina', name: 'Press pecho máquina', patron: 'empuje', equipo: ['maquina'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: ['flexiones'], tipoDescanso: 'compuesto' },
+      'flexiones': { id: 'flexiones', name: 'Flexiones', patron: 'empuje', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 1, sustitutos: [], tipoDescanso: 'accesorio' },
+      'elevaciones-laterales': { id: 'elevaciones-laterales', name: 'Elevaciones laterales', patron: 'empuje', equipo: ['mancuernas'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: 'Peso ligero, control', tipoDescanso: 'accesorio' },
+      
+      // TIRÓN
+      'remo-mancuerna': { id: 'remo-mancuerna', name: 'Remo con mancuerna', patron: 'tiron', equipo: ['mancuerna', 'banco'], riesgoRodilla: 0, riesgoCuello: 1, sustitutos: ['remo-polea', 'remo-maquina'], notas: 'Retrae escápula al subir', tipoDescanso: 'compuesto' },
+      'remo-polea': { id: 'remo-polea', name: 'Remo en polea', patron: 'tiron', equipo: ['polea'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: ['remo-maquina'], tipoDescanso: 'compuesto' },
+      'remo-maquina': { id: 'remo-maquina', name: 'Remo en máquina', patron: 'tiron', equipo: ['maquina'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: ['remo-polea'], tipoDescanso: 'compuesto' },
+      'jalon-polea': { id: 'jalon-polea', name: 'Jalón en polea', patron: 'tiron', equipo: ['polea'], riesgoRodilla: 0, riesgoCuello: 1, sustitutos: [], notas: 'Lleva al pecho', tipoDescanso: 'compuesto' },
+      'face-pull': { id: 'face-pull', name: 'Face Pull', patron: 'tiron', equipo: ['polea'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: ['band-pull-apart'], notas: 'Esencial para hombros', tipoDescanso: 'accesorio' },
+      'band-pull-apart': { id: 'band-pull-apart', name: 'Band Pull-Apart', patron: 'tiron', equipo: ['banda'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], tipoDescanso: 'accesorio' },
+      
+      // CORE
+      'pallof-press': { id: 'pallof-press', name: 'Pallof Press', patron: 'core', equipo: ['polea'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: ['plancha-lateral'], notas: 'Anti-rotación', tipoDescanso: 'core' },
+      'plancha-lateral': { id: 'plancha-lateral', name: 'Plancha lateral', patron: 'core', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: '20-30s cada lado', tipoDescanso: 'core' },
+      'dead-bug': { id: 'dead-bug', name: 'Dead Bug', patron: 'core', equipo: ['ninguno'], riesgoRodilla: 0, riesgoCuello: 0, sustitutos: [], notas: '10 cada lado', tipoDescanso: 'core' },
+      
+      // CARDIO
+      'bicicleta': { id: 'bicicleta', name: 'Bicicleta estática', patron: 'cardio', equipo: ['bicicleta'], riesgoRodilla: 1, riesgoCuello: 0, sustitutos: ['remo-ergo', 'cinta'], notas: 'Zona 2: poder hablar' },
+      'remo-ergo': { id: 'remo-ergo', name: 'Remo ergómetro', patron: 'cardio', equipo: ['remo'], riesgoRodilla: 1, riesgoCuello: 1, sustitutos: ['bicicleta'] },
+      'cinta': { id: 'cinta', name: 'Cinta inclinada', patron: 'cardio', equipo: ['cinta'], riesgoRodilla: 1, riesgoCuello: 0, sustitutos: ['bicicleta'], notas: '8-12% inclinación, 5-6 km/h' }
+    };
+
+    // ============================================
+    // APP
+    // ============================================
+    function app() {
+      return {
+        currentScreen: 'home',
+        screenTitles: { home: 'Entrenamiento', bilbo: 'Método Bilbo', profile: 'Ajustes', stats: 'Estadísticas' },
+        
+        // Modals
+        showCheckinModal: false,
+        showTimerModal: false,
+        showPainModal: false,
+        showBackupModal: false,
+        
+        // Timer
+        timerSeconds: 0,
+        timerTotal: 0,
+        timerProgress: 100,
+        timerInterval: null,
+        
+        // Profile
+        profile: {
+          problemasCuello: true,
+          tendinopatiaRodilla: true,
+          cifosis: true,
+          umbralRodilla: 5,
+          umbralCuello: 4,
+          descansoCompuesto: 90,
+          descansoAccesorio: 60
+        },
+        
+        // Gym
+        gym: {
+          equipamiento: {
+            mancuernas: true,
+            banco: true,
+            polea: true,
+            prensa: true,
+            maquinaFemoral: true,
+            bicicleta: true,
+            remo: true,
+            cinta: true,
+            banda: true
+          }
+        },
+        
+        equipNames: {
+          mancuernas: 'Mancuernas',
+          banco: 'Banco',
+          polea: 'Poleas',
+          prensa: 'Prensa',
+          maquinaFemoral: 'Máquina femoral',
+          bicicleta: 'Bicicleta',
+          remo: 'Remo ergómetro',
+          cinta: 'Cinta',
+          banda: 'Bandas elásticas'
+        },
+        
+        // Check-in
+        checkinForm: { estado: 3, dolorRodilla: 0, dolorCuello: 0, gymSaturado: false },
+        todayCheckin: null,
+        
+        // Día actual
+        nextDayType: 'A',
+        
+        // Bilbo
+        bilboCycles: {
+          'remo-mancuerna': { currentWeight: null, startWeight: null, cycle: 1, history: [] },
+          'rdl-mancuernas': { currentWeight: null, startWeight: null, cycle: 1, history: [] }
+        },
+        bilboSetup: { remo: null, rdl: null },
+        
+        // Sesión
+        currentSession: null,
+        recentSessions: [],
+        checkinHistory: [],
+        
+        // Métricas
+        metrics: { pesoActual: null, cinturaActual: null },
+        weightHistory: [],
+        waistHistory: [],
+        weekDays: [],
+        weeklyStats: { completed: 0 },
+        
+        // ==================== INIT ====================
+        init() {
+          this.loadAllData();
+          this.checkTodayCheckin();
+          this.calculateNextDay();
+          this.calculateWeekDays();
+          this.calculateStats();
+        },
+        
+        loadAllData() {
+          const keys = ['profile', 'gym', 'recentSessions', 'checkinHistory', 'bilboCycles', 'nextDayType', 'currentSession', 'weightHistory', 'waistHistory', 'metrics'];
+          keys.forEach(key => {
+            const data = localStorage.getItem('coach_' + key);
+            if (data) {
+              try {
+                const parsed = JSON.parse(data);
+                if (key === 'profile' || key === 'gym' || key === 'bilboCycles' || key === 'metrics') {
+                  this[key] = { ...this[key], ...parsed };
+                } else {
+                  this[key] = parsed;
+                }
+              } catch(e) {}
+            }
+          });
+        },
+        
+        saveProfile() { localStorage.setItem('coach_profile', JSON.stringify(this.profile)); },
+        saveGym() { localStorage.setItem('coach_gym', JSON.stringify(this.gym)); },
+        saveBilbo() { localStorage.setItem('coach_bilboCycles', JSON.stringify(this.bilboCycles)); },
+        saveNextDay() { localStorage.setItem('coach_nextDayType', JSON.stringify(this.nextDayType)); },
+        saveSessions() { localStorage.setItem('coach_recentSessions', JSON.stringify(this.recentSessions)); },
+        saveCheckins() { localStorage.setItem('coach_checkinHistory', JSON.stringify(this.checkinHistory)); },
+        saveSession() { if (this.currentSession) localStorage.setItem('coach_currentSession', JSON.stringify(this.currentSession)); },
+        saveMetrics() { localStorage.setItem('coach_metrics', JSON.stringify(this.metrics)); },
+        
+        // ==================== CHECK-IN ====================
+        checkTodayCheckin() {
+          const today = new Date().toDateString();
+          this.todayCheckin = this.checkinHistory.find(c => new Date(c.date).toDateString() === today) || null;
+        },
+        
+        submitCheckin() {
+          const checkin = { date: new Date().toISOString(), ...this.checkinForm };
+          const todayStr = new Date().toDateString();
+          const idx = this.checkinHistory.findIndex(c => new Date(c.date).toDateString() === todayStr);
+          if (idx >= 0) this.checkinHistory[idx] = checkin;
+          else this.checkinHistory.push(checkin);
+          this.todayCheckin = checkin;
+          this.saveCheckins();
+          this.showCheckinModal = false;
+        },
+        
+        getStateEmoji(state) { return ['', '😫', '😔', '😐', '🙂', '💪'][state] || '😐'; },
+        
+        // ==================== DÍAS A/B/C ====================
+        calculateNextDay() {
+          if (this.recentSessions.length === 0) {
+            this.nextDayType = 'A';
+            return;
+          }
+          const last = this.recentSessions[0];
+          const rotation = { 'A': 'B', 'B': 'C', 'C': 'A' };
+          this.nextDayType = rotation[last.dayType] || 'A';
+        },
+        
+        getDayTitle(day) {
+          return { 'A': 'Día A: Tirón + Bisagra', 'B': 'Día B: Sentadilla + Empuje', 'C': 'Día C: Espalda + Posterior' }[day];
+        },
+        
+        getDaySubtitle(day) {
+          return { 'A': 'Serie Bilbo en Remo', 'B': 'Volumen en piernas', 'C': 'Serie Bilbo en RDL' }[day];
+        },
+        
+        getDayExplanation(day) {
+          const explanations = {
+            'A': 'Hoy priorizo tu espalda con una serie Bilbo explosiva en remo, más trabajo de posterior (RDL, femoral) y jalón.',
+            'B': 'Hoy toca piernas (sentadilla + prensa) y el único día de empuje de la semana. Solo 2 ejercicios de pecho/hombro.',
+            'C': 'Día de máximo volumen en espalda: serie Bilbo en RDL + 2 tipos de remo + face pull para escápulas.'
+          };
+          return explanations[day];
+        },
+        
+        dayHasBilbo(day) { return day === 'A' || day === 'C'; },
+        
+        getBilboExercise(day) {
+          return { 'A': 'Remo mancuerna', 'C': 'RDL mancuernas' }[day] || '';
+        },
+        
+        getBilboWeight(day) {
+          const id = day === 'A' ? 'remo-mancuerna' : 'rdl-mancuernas';
+          return this.bilboCycles[id]?.currentWeight || '?';
+        },
+        
+        getNextBilboWeight(id) {
+          const cycle = this.bilboCycles[id];
+          if (!cycle.currentWeight) return '-';
+          return cycle.currentWeight + 2.5;
+        },
+        
+        initBilbo(id, weight) {
+          if (!weight || weight <= 0) return;
+          this.bilboCycles[id] = {
+            currentWeight: weight,
+            startWeight: weight,
+            cycle: 1,
+            history: []
+          };
+          this.saveBilbo();
+        },
+        
+        // ==================== GENERAR SESIÓN ====================
+        generateSession() {
+          const day = this.nextDayType;
+          const c = this.todayCheckin;
+          
+          const restrictions = {
+            dolorRodilla: c.dolorRodilla >= this.profile.umbralRodilla,
+            dolorCuello: c.dolorCuello >= this.profile.umbralCuello,
+            gymSaturado: c.gymSaturado
+          };
+          
+          let blocks = [];
+          
+          // Warmup
+          blocks.push({
+            name: 'Calentamiento (5 min)',
+            exercises: [
+              this.makeExercise('respiracion-diafragmatica'),
+              this.makeExercise('cat-cow'),
+              this.makeExercise('wall-slides'),
+              this.makeExercise('puente-gluteo')
+            ]
+          });
+          
+          if (day === 'A') {
+            blocks = blocks.concat(this.generateDayA(restrictions));
+          } else if (day === 'B') {
+            blocks = blocks.concat(this.generateDayB(restrictions));
+          } else {
+            blocks = blocks.concat(this.generateDayC(restrictions));
+          }
+          
+          // Cardio
+          blocks.push({
+            name: 'Cardio Zona 2 (10 min)',
+            exercises: [this.makeExercise('bicicleta', '10 min - ritmo conversacional')]
+          });
+          
+          this.currentSession = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            dayType: day,
+            duration: 50,
+            blocks: blocks,
+            completed: false
+          };
+          
+          this.saveSession();
+        },
+        
+        generateDayA(r) {
+          const blocks = [];
+          
+          // Bilbo: Remo
+          const bilboWeight = this.bilboCycles['remo-mancuerna'].currentWeight;
+          blocks.push({
+            name: '🎯 Serie Bilbo: Remo',
+            isBilbo: true,
+            exercises: [{
+              ...this.makeExercise('remo-mancuerna', bilboWeight ? `${bilboWeight}kg x máx reps EXPLOSIVAS` : 'Configura peso en pestaña Bilbo'),
+              isBilbo: true,
+              trackSets: true,
+              sets: [{ weight: bilboWeight, reps: null }],
+              restTime: 180,
+              note: 'Repeticiones rápidas pero controladas. Para a RIR 1-2.'
+            }]
+          });
+          
+          // Posterior
+          blocks.push({
+            name: 'Posterior',
+            exercises: [
+              this.makeExercise('rdl-mancuernas', '3x10-12', true, 3),
+              this.makeExercise('curl-femoral', '3x12', true, 3)
+            ]
+          });
+          
+          // Tirón extra
+          blocks.push({
+            name: 'Tirón',
+            exercises: [
+              this.makeExercise('jalon-polea', '3x10-12', true, 3),
+              this.makeExercise('face-pull', '3x15-20', true, 3)
+            ]
+          });
+          
+          // Core
+          blocks.push({
+            name: 'Core',
+            exercises: [
+              this.makeExercise('pallof-press', '2x10 cada lado'),
+              this.makeExercise('dead-bug', '2x10 cada lado')
+            ]
+          });
+          
+          return blocks;
+        },
+        
+        generateDayB(r) {
+          const blocks = [];
+          
+          // Piernas
+          const squatEx = r.dolorRodilla ? 'sentadilla-caja' : 'sentadilla-goblet';
+          blocks.push({
+            name: 'Piernas',
+            exercises: [
+              this.makeExercise(squatEx, '3x10-12', true, 3),
+              this.makeExercise('prensa', '3x12-15', true, 3),
+              this.makeExercise('split-squat', '2x10 cada pierna', true, 2)
+            ]
+          });
+          
+          // Empuje (mínimo)
+          blocks.push({
+            name: 'Empuje (mínimo)',
+            exercises: [
+              this.makeExercise('press-mancuernas', '3x10-12', true, 3),
+              this.makeExercise('elevaciones-laterales', '3x12-15', true, 3)
+            ]
+          });
+          
+          // Tirón (mantener frecuencia)
+          blocks.push({
+            name: 'Tirón (mantenimiento)',
+            exercises: [
+              this.makeExercise('remo-polea', '3x10-12', true, 3),
+              this.makeExercise('face-pull', '2x15')
+            ]
+          });
+          
+          // Core
+          blocks.push({
+            name: 'Core',
+            exercises: [
+              this.makeExercise('plancha-lateral', '2x20-30s cada lado')
+            ]
+          });
+          
+          return blocks;
+        },
+        
+        generateDayC(r) {
+          const blocks = [];
+          
+          // Bilbo: RDL
+          const bilboWeight = this.bilboCycles['rdl-mancuernas'].currentWeight;
+          blocks.push({
+            name: '🎯 Serie Bilbo: RDL',
+            isBilbo: true,
+            exercises: [{
+              ...this.makeExercise('rdl-mancuernas', bilboWeight ? `${bilboWeight}kg x máx reps EXPLOSIVAS` : 'Configura peso en pestaña Bilbo'),
+              isBilbo: true,
+              trackSets: true,
+              sets: [{ weight: bilboWeight, reps: null }],
+              restTime: 180,
+              note: 'Sube explosivo, baja controlado. Para a RIR 1-2.'
+            }]
+          });
+          
+          // Tirón x2
+          blocks.push({
+            name: 'Espalda (volumen alto)',
+            exercises: [
+              this.makeExercise('remo-mancuerna', '3x10-12', true, 3),
+              this.makeExercise('remo-polea', '3x10-12', true, 3),
+              this.makeExercise('jalon-polea', '3x10-12', true, 3)
+            ]
+          });
+          
+          // Escapular
+          blocks.push({
+            name: 'Correctivos escapulares',
+            exercises: [
+              this.makeExercise('face-pull', '3x15-20', true, 3),
+              this.makeExercise('band-pull-apart', '2x20')
+            ]
+          });
+          
+          // Core
+          blocks.push({
+            name: 'Core',
+            exercises: [
+              this.makeExercise('pallof-press', '2x10 cada lado'),
+              this.makeExercise('dead-bug', '2x10 cada lado')
+            ]
+          });
+          
+          return blocks;
+        },
+        
+        makeExercise(id, prescription = '', trackSets = false, numSets = 0) {
+          const ex = EJERCICIOS[id];
+          if (!ex) return null;
+          return {
+            id: ex.id,
+            name: ex.name,
+            prescription: prescription || ex.notas || '',
+            note: ex.notas && prescription ? ex.notas : null,
+            trackSets: trackSets,
+            sets: trackSets ? Array(numSets).fill(null).map(() => ({ weight: null, reps: null, rir: null })) : [],
+            restTime: trackSets ? (ex.tipoDescanso === 'compuesto' ? this.profile.descansoCompuesto : this.profile.descansoAccesorio) : null,
+            substitutes: ex.sustitutos.map(s => EJERCICIOS[s]?.name).filter(Boolean),
+            completed: false,
+            showSubs: false
+          };
+        },
+        
+        swapExercise(blockIdx, exIdx, newName) {
+          const newEx = Object.values(EJERCICIOS).find(e => e.name === newName);
+          if (!newEx || !this.currentSession) return;
+          const old = this.currentSession.blocks[blockIdx].exercises[exIdx];
+          this.currentSession.blocks[blockIdx].exercises[exIdx] = {
+            ...old,
+            id: newEx.id,
+            name: newEx.name,
+            substitutes: newEx.sustitutos.map(s => EJERCICIOS[s]?.name).filter(Boolean),
+            showSubs: false
+          };
+          this.saveSession();
+        },
+        
+        // ==================== BILBO TRACKING ====================
+        checkBilboProgress(exercise, set) {
+          if (!exercise.isBilbo || !set.reps) return;
+          
+          const id = exercise.id;
+          const cycle = this.bilboCycles[id];
+          if (!cycle) return;
+          
+          // Guardar en historial
+          cycle.history.push({
+            date: new Date().toISOString(),
+            weight: set.weight || cycle.currentWeight,
+            reps: set.reps
+          });
+          
+          // Si llegó a 15 o menos, nuevo ciclo
+          if (set.reps <= 15) {
+            cycle.cycle++;
+            cycle.startWeight += 5;
+            cycle.currentWeight = cycle.startWeight;
+          } else {
+            // Subir 2.5kg para próxima sesión
+            cycle.currentWeight += 2.5;
+          }
+          
+          this.saveBilbo();
+        },
+        
+        getBilboFeedback(reps) {
+          if (reps >= 27) return '✅ Perfecto! Reps ideales para el método Bilbo.';
+          if (reps >= 20) return '👍 Bien. Peso adecuado.';
+          if (reps >= 15) return '⚠️ Llegaste a 15 reps. Próxima sesión: nuevo ciclo con +5kg del peso inicial.';
+          return '🔄 Muy pocas reps. El peso puede ser alto o revisa la técnica.';
+        },
+        
+        getBilboFeedbackClass(reps) {
+          if (reps >= 20) return 'bg-[#22c55e20] text-green-600';
+          if (reps >= 15) return 'bg-[#f59e0b20] text-amber-600';
+          return 'bg-[#ef444420] text-red-600';
+        },
+        
+        // ==================== FINALIZAR SESIÓN ====================
+        finishSession() {
+          if (!this.currentSession) return;
+          
+          let completed = 0, total = 0;
+          this.currentSession.blocks.forEach(b => {
+            b.exercises.forEach(e => {
+              total++;
+              if (e.completed) completed++;
+              
+              // Procesar Bilbo
+              if (e.isBilbo && e.sets?.[0]?.reps) {
+                this.checkBilboProgress(e, e.sets[0]);
+              }
+            });
+          });
+          
+          this.recentSessions.unshift({
+            date: this.currentSession.date,
+            dayType: this.currentSession.dayType,
+            duration: this.currentSession.duration,
+            completed: completed >= total * 0.8,
+            completedExercises: completed,
+            totalExercises: total
+          });
+          
+          this.saveSessions();
+          this.calculateNextDay();
+          this.saveNextDay();
+          localStorage.removeItem('coach_currentSession');
+          this.currentSession = null;
+          this.calculateStats();
+        },
+        
+        // ==================== DOLOR ====================
+        handlePain(area) {
+          if (!this.currentSession) return;
+          this.currentSession.blocks.forEach(b => {
+            b.exercises.forEach(e => {
+              const ex = EJERCICIOS[e.id];
+              if (!ex) return;
+              let flag = false;
+              if (area === 'rodilla' && ex.riesgoRodilla >= 2) flag = true;
+              if (area === 'cuello' && ex.riesgoCuello >= 2) flag = true;
+              if (area === 'espalda' && ex.patron === 'bisagra') flag = true;
+              if (area === 'hombro' && ex.patron === 'empuje') flag = true;
+              if (flag) {
+                e.showSubs = true;
+                if (!e.name.includes('⚠️')) e.name = '⚠️ ' + e.name;
+              }
+            });
+          });
+          this.saveSession();
+          alert('He marcado los ejercicios que podrían molestarte. Revisa las alternativas.');
+          this.showPainModal = false;
+        },
+        
+        // ==================== TIMER ====================
+        startTimer(seconds, name) {
+          this.timerSeconds = seconds;
+          this.timerTotal = seconds;
+          this.timerProgress = 100;
+          this.showTimerModal = true;
+          if (this.timerInterval) clearInterval(this.timerInterval);
+          this.timerInterval = setInterval(() => {
+            if (this.timerSeconds > 0) {
+              this.timerSeconds--;
+              this.timerProgress = (this.timerSeconds / this.timerTotal) * 100;
+            } else {
+              this.timerFinished();
+            }
+          }, 1000);
+        },
+        
+        timerFinished() {
+          clearInterval(this.timerInterval);
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            osc.connect(ctx.destination);
+            osc.frequency.value = 800;
+            osc.start();
+            setTimeout(() => osc.stop(), 200);
+          } catch(e) {}
+        },
+        
+        stopTimer() {
+          if (this.timerInterval) clearInterval(this.timerInterval);
+          this.showTimerModal = false;
+        },
+        
+        addTimerSeconds(s) {
+          this.timerSeconds = Math.max(0, this.timerSeconds + s);
+          this.timerTotal = Math.max(this.timerTotal, this.timerSeconds);
+          this.timerProgress = (this.timerSeconds / this.timerTotal) * 100;
+        },
+        
+        formatTimer(s) {
+          return Math.floor(s/60) + ':' + (s%60).toString().padStart(2, '0');
+        },
+        
+        // ==================== STATS ====================
+        calculateWeekDays() {
+          const days = [];
+          const names = ['D','L','M','X','J','V','S'];
+          const today = new Date();
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            days.push({ date: d.toDateString(), label: names[d.getDay()] });
+          }
+          this.weekDays = days;
+        },
+        
+        calculateStats() {
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - 6);
+          this.weeklyStats.completed = this.recentSessions.filter(s => new Date(s.date) >= weekStart).length;
+        },
+        
+        getWorkoutDayClass(day) {
+          const s = this.recentSessions.find(s => new Date(s.date).toDateString() === day.date);
+          if (!s) return 'bg-slate-100';
+          return s.completed ? 'bg-green-500' : 'bg-[#f59e0b]';
+        },
+        
+        getWorkoutDayHeight(day) {
+          const s = this.recentSessions.find(s => new Date(s.date).toDateString() === day.date);
+          return s ? (s.completed ? 70 : 40) : 15;
+        },
+        
+        getTotalCompletedSessions() {
+          return this.recentSessions.filter(s => s.completed).length;
+        },
+        
+        getStreakDays() {
+          let streak = 0;
+          const today = new Date();
+          for (let i = 0; i < 30; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            if (this.recentSessions.some(s => new Date(s.date).toDateString() === d.toDateString())) streak++;
+            else if (i > 0) break;
+          }
+          return streak;
+        },
+        
+        formatDate(str) {
+          const d = new Date(str);
+          const today = new Date();
+          if (d.toDateString() === today.toDateString()) return 'Hoy';
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          if (d.toDateString() === yesterday.toDateString()) return 'Ayer';
+          return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+        },
+        
+        formatDateLong(str) {
+          return new Date(str).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        },
+        
+        // ==================== MÉTRICAS ====================
+        addWeightEntry() {
+          if (!this.metrics.pesoActual) return;
+          this.weightHistory.push({ date: new Date().toISOString(), value: this.metrics.pesoActual });
+          localStorage.setItem('coach_weightHistory', JSON.stringify(this.weightHistory));
+          this.saveMetrics();
+        },
+        
+        addWaistEntry() {
+          if (!this.metrics.cinturaActual) return;
+          this.waistHistory.push({ date: new Date().toISOString(), value: this.metrics.cinturaActual });
+          localStorage.setItem('coach_waistHistory', JSON.stringify(this.waistHistory));
+          this.saveMetrics();
+        },
+        
+        // ==================== BACKUP ====================
+        exportData() {
+          const data = {
+            version: '3.0',
+            date: new Date().toISOString(),
+            profile: this.profile,
+            gym: this.gym,
+            bilboCycles: this.bilboCycles,
+            nextDayType: this.nextDayType,
+            recentSessions: this.recentSessions,
+            checkinHistory: this.checkinHistory,
+            weightHistory: this.weightHistory,
+            waistHistory: this.waistHistory,
+            metrics: this.metrics
+          };
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `coach-backup-${new Date().toISOString().split('T')[0]}.json`;
+          a.click();
+          this.showBackupModal = false;
+        },
+        
+        async importData(e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          try {
+            const data = JSON.parse(await file.text());
+            if (data.profile) { this.profile = { ...this.profile, ...data.profile }; this.saveProfile(); }
+            if (data.gym) { this.gym = { ...this.gym, ...data.gym }; this.saveGym(); }
+            if (data.bilboCycles) { this.bilboCycles = { ...this.bilboCycles, ...data.bilboCycles }; this.saveBilbo(); }
+            if (data.nextDayType) { this.nextDayType = data.nextDayType; this.saveNextDay(); }
+            if (data.recentSessions) { this.recentSessions = data.recentSessions; this.saveSessions(); }
+            if (data.checkinHistory) { this.checkinHistory = data.checkinHistory; this.saveCheckins(); }
+            if (data.weightHistory) { this.weightHistory = data.weightHistory; localStorage.setItem('coach_weightHistory', JSON.stringify(this.weightHistory)); }
+            if (data.waistHistory) { this.waistHistory = data.waistHistory; localStorage.setItem('coach_waistHistory', JSON.stringify(this.waistHistory)); }
+            if (data.metrics) { this.metrics = { ...this.metrics, ...data.metrics }; this.saveMetrics(); }
+            this.checkTodayCheckin();
+            this.calculateStats();
+            alert('Datos importados!');
+          } catch(err) {
+            alert('Error: ' + err.message);
+          }
+          e.target.value = '';
+          this.showBackupModal = false;
+        }
+      };
+    }
+  </script>
+</body>
+</html>
